@@ -1,42 +1,32 @@
 import { getCommands } from "./commands/CLICommand.js";
+import { State } from "./commands/state.js";
 
-export async function startREPL()
+export function startREPL(state: State): void
 {
-    const { createInterface } = await import('node:readline');
-    const rl = createInterface(
-        {
-            input: process.stdin,
-            output: process.stdout,
-            prompt: "Pokedex > "
-        }
-    );
-    rl.prompt();
-    rl.on("line", (line) => 
+    state.rl.prompt();
+    state.rl.on("line", async (line) => 
         {
             const lst = cleanInput(line);
             if (lst.length === 0)
             {
-                rl.prompt();
+                state.rl.prompt();
             }
             
-            const cmds = getCommands();
-            for (let string of lst)
-            {
+            
                 try {
-                    if (cmds[string])
+                    if (state.cmds[lst[0]])
                     {
-                        cmds[string].callback(cmds);
+                        await state.cmds[lst[0]].callback(state, lst[1]);
                     }
                     else
                     {
-                        console.log(`Unknown command: ${string}`);
+                        console.log(`Unknown command: ${lst[0]}`);
                     }
                 } catch (error) {
-                    console.error(`Error executing command '${string}':`, error);
+                    console.error(`Error executing command '${lst[0]}':`, error);
                 }
-            }
-            rl.prompt();
-
+            
+            state.rl.prompt();
         });
 }
 
